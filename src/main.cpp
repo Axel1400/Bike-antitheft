@@ -8,22 +8,9 @@
 #include <Servo_bici.h>
 #include <WiFi.h>
 #include <soc/rtc.h>
-/*
-constexpr uint64_t gpio_to_interrupt_pin(uint32_t gpio_pin)
-{
-    return (1ULL << gpio_pin);
-}
-*/
 void setup()
 {
     Serial.begin(115200);
-    xTaskCreate(
-        bici::NFC,
-        "NFC",
-        10000,
-        nullptr,
-        1,
-        nullptr);
 
     TaskHandle_t gpstask;
     xTaskCreate(
@@ -43,15 +30,15 @@ void setup()
         nullptr,
         1,
         &servoTask);
-    /*
-    pinMode(5, INPUT_PULLUP);
-    
-    attachInterrupt(digitalPinToInterrupt(5), []()IRAM_ATTR
-    {
-        auto higherPriorityTask = pdFALSE;
-        xTaskNotifyFromISR(servoTask, 2, eSetBits, &higherPriorityTask);
-    }, FALLING);
-    */
+
+    xTaskCreate(
+        bici::NFC,
+        "NFC",
+        10000,
+        &servoTask,
+        1,
+        nullptr);
+
     auto configurePin = [](uint32_t pin) {
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_NEGEDGE;
@@ -60,7 +47,7 @@ void setup()
         io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
         gpio_config(&io_conf);
-
+    
         gpio_set_intr_type(static_cast<gpio_num_t>(pin), GPIO_INTR_NEGEDGE);
         gpio_intr_enable(static_cast<gpio_num_t>(pin)); // Enable the pin for interrupts
     };
@@ -81,14 +68,18 @@ void setup()
         auto gpstask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*gpstask, 0x03, eSetBits, &higherPriorityTask);
     }, (void *)&servoTask);
-    
     pinMode(21, OUTPUT);
+/*
     while (1)
     {
         digitalWrite(21, 1);
         delay(7000);
         digitalWrite(21, 0);
         delay(7000);
+    }
+*/
+    while(1){
+        vTaskDelay(portMAX_DELAY);
     }
 }
 
