@@ -1,4 +1,4 @@
-#include <Arduino.h>
+//#include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
@@ -6,11 +6,39 @@
 #include <NFC_bici.h>
 #include <GPS_bici.h>
 #include <Servo_bici.h>
+#include <Temp_bici.h>
 #include <WiFi.h>
 #include <soc/rtc.h>
+#include <GSM.h>
+#define TINY_GSM_MODEM_A6
+#include <TinyGsmClient.h>
+#include <BlynkSimpleTinyGSM.h>
 void setup()
 {
-    Serial.begin(115200);
+    const char apn[] = "YourAPN";
+    const char user[] = "";
+    const char pass[] = "";
+    const char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
+    TinyGsm modem(Serial);
+    TinyGsmClient client(modem);
+    Blynk.begin(auth, modem, apn, user, pass);
+    Serial.begin(115200, SERIAL_8N1, 16, 17, false);
+    TaskHandle_t gsmtask;
+    xTaskCreate(
+        bici::GSM,
+        "GSM",
+        10000,
+        nullptr,
+        1,
+        &gsmtask);
+    TaskHandle_t temptask;
+    xTaskCreate(
+        bici::Temp,
+        "Temp",
+        10000,
+        nullptr,
+        1,
+        &temptask);
 
     TaskHandle_t gpstask;
     xTaskCreate(
@@ -30,6 +58,7 @@ void setup()
         nullptr,
         1,
         &servoTask);
+    TaskHandle_t NFCtask;
 
     xTaskCreate(
         bici::NFC,
@@ -47,11 +76,11 @@ void setup()
         io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
         gpio_config(&io_conf);
-    
+
         gpio_set_intr_type(static_cast<gpio_num_t>(pin), GPIO_INTR_NEGEDGE);
         gpio_intr_enable(static_cast<gpio_num_t>(pin)); // Enable the pin for interrupts
     };
-    
+
     configurePin(4);
     configurePin(13);
     gpio_install_isr_service(0);
@@ -60,25 +89,18 @@ void setup()
         auto higherPriorityTask = pdFALSE;
         auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*servoTask, 2, eSetBits, &higherPriorityTask);
-    },(void *)&servoTask);
+    },
+                         (void *)&servoTask);
 
-    
     gpio_isr_handler_add(GPIO_NUM_13, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto gpstask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*gpstask, 0x03, eSetBits, &higherPriorityTask);
-    }, (void *)&servoTask);
+    },
+                         (void *)&servoTask);
     pinMode(21, OUTPUT);
-/*
     while (1)
     {
-        digitalWrite(21, 1);
-        delay(7000);
-        digitalWrite(21, 0);
-        delay(7000);
-    }
-*/
-    while(1){
         vTaskDelay(portMAX_DELAY);
     }
 }
