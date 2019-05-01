@@ -1,4 +1,4 @@
-//#include <Arduino.h>
+#include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
@@ -9,20 +9,21 @@
 #include <Temp_bici.h>
 #include <WiFi.h>
 #include <soc/rtc.h>
-#include <GSM.h>
+//#include <GSM.h>
 #define TINY_GSM_MODEM_A6
 #include <TinyGsmClient.h>
 #include <BlynkSimpleTinyGSM.h>
 void setup()
 {
-    const char apn[] = "YourAPN";
+    Serial.begin(115200, SERIAL_8N1, 16, 17, false);
+    const char apn[] = "internet.movistar.mx";
     const char user[] = "";
     const char pass[] = "";
     const char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
-    TinyGsm modem(Serial);
-    TinyGsmClient client(modem);
-    Blynk.begin(auth, modem, apn, user, pass);
-    Serial.begin(115200, SERIAL_8N1, 16, 17, false);
+    //TinyGsm modem(Serial);
+    //TinyGsmClient client(modem);
+    //Blynk.begin(auth, modem, apn, user, pass);
+    /*
     TaskHandle_t gsmtask;
     xTaskCreate(
         bici::GSM,
@@ -31,15 +32,9 @@ void setup()
         nullptr,
         1,
         &gsmtask);
-    TaskHandle_t temptask;
-    xTaskCreate(
-        bici::Temp,
-        "Temp",
-        10000,
-        nullptr,
-        1,
-        &temptask);
+    */
 
+       
     TaskHandle_t gpstask;
     xTaskCreate(
         bici::GPS_task,
@@ -58,8 +53,17 @@ void setup()
         nullptr,
         1,
         &servoTask);
-    TaskHandle_t NFCtask;
 
+    TaskHandle_t temptask;
+    xTaskCreate(
+        bici::Temp,
+        "Temp",
+        10000,
+        &servoTask,
+        1,
+        &temptask);
+        
+    TaskHandle_t NFCtask;
     xTaskCreate(
         bici::NFC,
         "NFC",
@@ -94,11 +98,12 @@ void setup()
 
     gpio_isr_handler_add(GPIO_NUM_13, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
-        auto gpstask = reinterpret_cast<TaskHandle_t *>(pin);
-        xTaskNotifyFromISR(*gpstask, 0x03, eSetBits, &higherPriorityTask);
+        auto NFCtask = reinterpret_cast<TaskHandle_t *>(pin);
+        xTaskNotifyFromISR(*NFCtask, 0x03, eSetBits, &higherPriorityTask);
     },
-                         (void *)&servoTask);
+    (void *)&servoTask);
     pinMode(21, OUTPUT);
+    Serial.print("HOLA");
     while (1)
     {
         vTaskDelay(portMAX_DELAY);
@@ -107,4 +112,5 @@ void setup()
 
 void loop()
 {
+
 }

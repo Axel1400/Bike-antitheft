@@ -26,7 +26,7 @@ void bici::NFC(void *parameter)
     uint32_t versiondata = nfc.getFirmwareVersion();
     while (!versiondata)
     {
-        Serial.println("Did not find the shield - locking up");
+        //Serial.println("Did not find the shield - locking up");
         versiondata = nfc.getFirmwareVersion();
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -40,9 +40,9 @@ void bici::NFC(void *parameter)
         bool tag;
         uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
         uint8_t uidLength;
- //       xTaskNotifyWait(0, ULONG_MAX, &notifiedValue, portMAX_DELAY);
-        // portDISABLE_INTERRUPTS();
- //       if (notifiedValue == 0x03)
+        xTaskNotifyWait(0, ULONG_MAX, &notifiedValue, portMAX_DELAY);
+        portDISABLE_INTERRUPTS();
+        if (notifiedValue == 0x03)
         {
             tag = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
             if (!tag)
@@ -64,14 +64,18 @@ void bici::NFC(void *parameter)
             code.toUpperCase();
             Serial.println(code);
 
-            if (code=="44DC0AAAB5C81")
+            if (code == "44DC0AAAB5C81")
             {
+                auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
+                xTaskNotify(*servoTask, 2, eSetBits);
+                /*
                 digitalWrite(21, 1);
                 delay(10);
                 digitalWrite(21, 0);
+                */
             }
         }
-        // portENABLE_INTERRUPTS();
+         portENABLE_INTERRUPTS();
 
         vTaskDelay(1000);
     }

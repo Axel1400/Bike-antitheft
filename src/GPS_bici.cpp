@@ -12,6 +12,7 @@ void bici::GPS_task(void *parameter)
     auto gps = TinyGPSPlus{};
     while (1)
     {
+        Serial.println("GPS");
         while (Serial2.available())
         {
             char chr = Serial2.read();
