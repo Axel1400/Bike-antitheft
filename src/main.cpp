@@ -12,16 +12,25 @@
 //#include <GSM.h>
 #define TINY_GSM_MODEM_A6
 #include <TinyGsmClient.h>
-#include <BlynkSimpleTinyGSM.h>
+//#include <BlynkSimpleTinyGSM.h>
+#include <BlynkSimpleSIM800.h>
+
 void setup()
 {
-    Serial.begin(115200, SERIAL_8N1, 16, 17, false);
+    HardwareSerial Serial1(1);
+    Serial.begin(115200);
+    TinyGsm modem(Serial1);
     const char apn[] = "internet.movistar.mx";
     const char user[] = "";
     const char pass[] = "";
     const char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
-    //TinyGsm modem(Serial);
-    //TinyGsmClient client(modem);
+    Serial1.begin(115200, SERIAL_8N1, 4, 12, false);
+    delay(3000);
+    modem.restart();
+    String modemInfo = modem.getModemInfo();
+    Serial.print("Modem: ");
+    Serial.println(modemInfo);
+    TinyGsmClient client(modem);
     //Blynk.begin(auth, modem, apn, user, pass);
     /*
     TaskHandle_t gsmtask;
@@ -34,7 +43,6 @@ void setup()
         &gsmtask);
     */
 
-       
     TaskHandle_t gpstask;
     xTaskCreate(
         bici::GPS_task,
@@ -62,7 +70,7 @@ void setup()
         &servoTask,
         1,
         &temptask);
-        
+
     TaskHandle_t NFCtask;
     xTaskCreate(
         bici::NFC,
@@ -85,23 +93,23 @@ void setup()
         gpio_intr_enable(static_cast<gpio_num_t>(pin)); // Enable the pin for interrupts
     };
 
-    configurePin(4);
+    configurePin(14);
     configurePin(13);
     gpio_install_isr_service(0);
 
-    gpio_isr_handler_add(GPIO_NUM_4, [](void *pin) IRAM_ATTR {
+    gpio_isr_handler_add(GPIO_NUM_14, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*servoTask, 2, eSetBits, &higherPriorityTask);
     },
                          (void *)&servoTask);
-
+    
     gpio_isr_handler_add(GPIO_NUM_13, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto NFCtask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*NFCtask, 0x03, eSetBits, &higherPriorityTask);
     },
-    (void *)&servoTask);
+                         (void *)&NFCtask);
     pinMode(21, OUTPUT);
     Serial.print("HOLA");
     while (1)
@@ -112,5 +120,5 @@ void setup()
 
 void loop()
 {
-
+    //Blynk.run;
 }

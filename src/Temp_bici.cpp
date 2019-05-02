@@ -18,9 +18,9 @@ void bici::Temp(void *parameter)
         for (auto i = 0; i < 1024; i++)
         {
             val = adc1_get_raw(ADC1_CHANNEL_6);
-            vout = vout + val;
+            vout += val;
         }
-        vout = vout / 1024;
+        vout /= 1024;
         if (vout <= 496.36)
         {
             vout = 496.36;
@@ -38,6 +38,7 @@ void bici::Temp(void *parameter)
         {
             auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
             xTaskNotify(*servoTask, 3, eSetBits);
+            //Blynk.notify("Alerta con la bicicleta");
         }
         vTaskDelay(500);
     }

@@ -18,7 +18,7 @@ void bici::servoTask(void *parameter)
     constexpr int ledChannel = 0;
     constexpr int resolution = 13;
     constexpr auto maxDutyCicle = uint32_t{1 << 13};
-    constexpr auto servoPin = 2;
+    constexpr auto servoPin = 15;
     uint32_t notifiedValue = 0;
     auto a=0;
     ledcAttachPin(servoPin, ledChannel);
