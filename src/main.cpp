@@ -92,7 +92,6 @@ void setup()
         gpio_set_intr_type(static_cast<gpio_num_t>(pin), GPIO_INTR_NEGEDGE);
         gpio_intr_enable(static_cast<gpio_num_t>(pin)); // Enable the pin for interrupts
     };
-
     configurePin(14);
     configurePin(13);
     gpio_install_isr_service(0);

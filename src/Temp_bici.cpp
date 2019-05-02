@@ -27,13 +27,6 @@ void bici::Temp(void *parameter)
         }
         uint32_t temp = (vout - 496.36) / 24.19;
         Serial.println(temp);
-        /*
-        if (temp <= 10)
-        {
-            auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
-            xTaskNotify(*servoTask, 2, eSetBits);
-        }
-        */
         if (temp >= 100)
         {
             auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
