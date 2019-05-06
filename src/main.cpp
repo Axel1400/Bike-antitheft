@@ -1,4 +1,4 @@
-#include <Arduino.h>
+
 #include <freertos/FreeRTOS.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
