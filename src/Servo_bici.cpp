@@ -14,7 +14,7 @@ void bici::servoTask(void *parameter)
     using namespace std::literals::chrono_literals;
 
     static auto servoState = ServoState::Open;
-    constexpr int freq = 50;
+    constexpr int freq = 5000;
     constexpr int ledChannel = 0;
     constexpr int resolution = 13;
     constexpr auto maxDutyCicle = uint32_t{1 << 13};
@@ -25,7 +25,7 @@ void bici::servoTask(void *parameter)
     while (1)
     {
         xTaskNotifyWait(0, ULONG_MAX, &notifiedValue, portMAX_DELAY);
-        portDISABLE_INTERRUPTS();
+        //portDISABLE_INTERRUPTS();
         if (notifiedValue == 3)
         {
             if (a==0)
@@ -33,11 +33,10 @@ void bici::servoTask(void *parameter)
                 ledcSetup(ledChannel, freq, resolution);
                 ledcWrite(ledChannel, maxDutyCicle * 0.15); // 819
                 servoState = ServoState::Close;
-                Serial.println("Ya quedo");
                 a=1;
             }
         }
-
+        
         if (notifiedValue == 2)
         {
             //Serial.println("Entra");
@@ -57,6 +56,6 @@ void bici::servoTask(void *parameter)
             std::this_thread::sleep_for(1s);
             Serial.println("Sale");
         }
-        portENABLE_INTERRUPTS();
+        //portENABLE_INTERRUPTS();
     }
 }

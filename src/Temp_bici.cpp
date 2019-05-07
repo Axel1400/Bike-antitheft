@@ -7,10 +7,13 @@
 #include <soc/rtc.h>
 #include <Servo_bici.h>
 #include <Arduino.h>
+#include <thread>
+#include <tuple>
 void bici::Temp(void *parameter)
 {
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_11);
+    auto& Temperature = *static_cast<std::tuple<int>*>(parameter);
     while (1)
     {
         uint32_t val = adc1_get_raw(ADC1_CHANNEL_6);
@@ -25,13 +28,14 @@ void bici::Temp(void *parameter)
         {
             vout = 496.36;
         }
-        uint32_t temp = (vout - 496.36) / 24.19;
-        Serial.println(temp);
+        int temp = (vout - 496.36) / 24.19;
+        
+        //std::get<0>(Temperature) = temp;
+        
         if (temp >= 100)
         {
             auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
             xTaskNotify(*servoTask, 3, eSetBits);
-            //Blynk.notify("Alerta con la bicicleta");
         }
         vTaskDelay(500);
     }

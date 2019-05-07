@@ -9,46 +9,50 @@
 #include <Temp_bici.h>
 #include <WiFi.h>
 #include <soc/rtc.h>
-//#include <GSM.h>
+#define BLYNK_PRINT Serial
 #define TINY_GSM_MODEM_A6
 #include <TinyGsmClient.h>
-//#include <BlynkSimpleTinyGSM.h>
-#include <BlynkSimpleSIM800.h>
+#include <BlynkSimpleTinyGSM.h>
+#include <tuple>
 
+BlynkTimer timer;
+auto position = std::tuple<double, double>{};
+//auto Temperature = std::tuple<int>{};
 void setup()
 {
-    HardwareSerial Serial1(1);
     Serial.begin(115200);
-    TinyGsm modem(Serial1);
-    const char apn[] = "internet.movistar.mx";
-    const char user[] = "";
-    const char pass[] = "";
+
+    const char apn[] = "internet.itelcel.com";
+    const char user[] = "webgprs";
+    const char pass[] = "webgprs2002";
     const char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
+    HardwareSerial Serial1(1);
+    TinyGsm modem(Serial1);
     Serial1.begin(115200, SERIAL_8N1, 4, 12, false);
     delay(3000);
     modem.restart();
     String modemInfo = modem.getModemInfo();
     Serial.print("Modem: ");
     Serial.println(modemInfo);
-    TinyGsmClient client(modem);
-    //Blynk.begin(auth, modem, apn, user, pass);
-    /*
-    TaskHandle_t gsmtask;
-    xTaskCreate(
-        bici::GSM,
-        "GSM",
-        10000,
-        nullptr,
-        1,
-        &gsmtask);
-    */
+
+    Blynk.begin(auth, modem, apn, user, pass);
+
+    timer.setInterval(2000, [] {
+        Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
+        Blynk.syncVirtual(V2);
+        if (V2==1)
+        {
+           Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
+        }
+    }); 
+    pinMode(2, OUTPUT);
 
     TaskHandle_t gpstask;
     xTaskCreate(
         bici::GPS_task,
         "GPS",
         10000,
-        nullptr,
+        &position,
         1,
         &gpstask);
 
@@ -79,7 +83,6 @@ void setup()
         &servoTask,
         1,
         nullptr);
-
     auto configurePin = [](uint32_t pin) {
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_NEGEDGE;
@@ -94,8 +97,9 @@ void setup()
     };
     configurePin(14);
     configurePin(13);
-    gpio_install_isr_service(0);
 
+    gpio_install_isr_service(0);
+    
     gpio_isr_handler_add(GPIO_NUM_14, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
@@ -109,15 +113,15 @@ void setup()
         xTaskNotifyFromISR(*NFCtask, 0x03, eSetBits, &higherPriorityTask);
     },
                          (void *)&NFCtask);
-    pinMode(21, OUTPUT);
-    Serial.print("HOLA");
+
     while (1)
     {
-        vTaskDelay(portMAX_DELAY);
+        Blynk.run();
+        timer.run();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
 void loop()
 {
-    //Blynk.run;
 }

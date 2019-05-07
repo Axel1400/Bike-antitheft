@@ -1,14 +1,15 @@
 #include <NFC_bici.h>
 #include <array>
 #include <cstdint>
+#include <freertos/FreeRTOS.h>
+#include <soc/rtc.h>
+#include <Arduino.h>
 //constexpr uint8_t irq = 13;
 //constexpr uint8_t reset = 12;
-
 constexpr uint8_t mosi = 23;
 constexpr uint8_t miso = 19;
 constexpr uint8_t clk = 18;
 constexpr uint8_t cs = 5;
-
 inline void ReadUuid(Adafruit_PN532 &nfc, uint8_t *uuid)
 {
     uint8_t *uuidIterator = uuid;
@@ -51,8 +52,8 @@ void bici::NFC(void *parameter)
                 // se lee así
                 continue;
             }
-            auto val = digitalRead(13);
-            Serial.println(val);
+            //auto val = digitalRead(13);
+            //Serial.println(val);
             uint8_t readedUuid[16];
             ReadUuid(nfc, readedUuid);
 
