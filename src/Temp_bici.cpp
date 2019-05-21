@@ -30,13 +30,13 @@ void bici::Temp(void *parameter)
         }
         int temp = (vout - 496.36) / 24.19;
         
-        //std::get<0>(Temperature) = temp;
+        std::get<0>(Temperature) = temp;
         
         if (temp >= 100)
         {
             auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
             xTaskNotify(*servoTask, 3, eSetBits);
         }
-        vTaskDelay(500);
+        vTaskDelay(500/portTICK_PERIOD_MS);
     }
 }

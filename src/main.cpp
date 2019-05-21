@@ -1,8 +1,9 @@
-
+#include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
 #include <driver/ledc.h>
+#include <OLED.h>
 #include <NFC_bici.h>
 #include <GPS_bici.h>
 #include <Servo_bici.h>
@@ -13,15 +14,16 @@
 #define TINY_GSM_MODEM_A6
 #include <TinyGsmClient.h>
 #include <BlynkSimpleTinyGSM.h>
+#include <driver/i2c.h>
 #include <tuple>
-
 BlynkTimer timer;
 auto position = std::tuple<double, double>{};
-//auto Temperature = std::tuple<int>{};
+auto Temperature = std::tuple<int>{};
 void setup()
 {
+    pinMode(2, OUTPUT);
     Serial.begin(115200);
-
+    /*
     const char apn[] = "internet.itelcel.com";
     const char user[] = "webgprs";
     const char pass[] = "webgprs2002";
@@ -40,13 +42,22 @@ void setup()
     timer.setInterval(2000, [] {
         Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
         Blynk.syncVirtual(V2);
-        if (V2==1)
+        if (V2 == 1)
         {
-           Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
+            Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
         }
-    }); 
-    pinMode(2, OUTPUT);
-
+    });*/
+    
+   
+    TaskHandle_t OLEDtask;
+    xTaskCreate(
+        bici::OLED,
+        "OLED",
+        10000,
+        nullptr,
+        1,
+        &OLEDtask);
+    
     TaskHandle_t gpstask;
     xTaskCreate(
         bici::GPS_task,
@@ -55,6 +66,7 @@ void setup()
         &position,
         1,
         &gpstask);
+
 
     TaskHandle_t servoTask;
 
@@ -99,25 +111,44 @@ void setup()
     configurePin(13);
 
     gpio_install_isr_service(0);
-    
+
     gpio_isr_handler_add(GPIO_NUM_14, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*servoTask, 2, eSetBits, &higherPriorityTask);
     },
                          (void *)&servoTask);
-    
+
     gpio_isr_handler_add(GPIO_NUM_13, [](void *pin) IRAM_ATTR {
         auto higherPriorityTask = pdFALSE;
         auto NFCtask = reinterpret_cast<TaskHandle_t *>(pin);
         xTaskNotifyFromISR(*NFCtask, 0x03, eSetBits, &higherPriorityTask);
     },
                          (void *)&NFCtask);
+    //Cadena
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1ULL << 25);
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
+
+    gpio_set_intr_type(static_cast<gpio_num_t>(25), GPIO_INTR_NEGEDGE);
+    gpio_intr_enable(static_cast<gpio_num_t>(25)); // Enable the pin for interrupts
+
+    gpio_isr_handler_add(GPIO_NUM_25, [](void *pin) IRAM_ATTR {
+        auto higherPriorityTask = pdFALSE;
+        auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
+        Blynk.notify("Cortaron la cadena, sistema activado");
+        xTaskNotifyFromISR(*servoTask, 3, eSetBits, &higherPriorityTask);
+    },
+                         (void *)&servoTask);
 
     while (1)
     {
-        Blynk.run();
-        timer.run();
+        //Blynk.run();
+        //timer.run();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
