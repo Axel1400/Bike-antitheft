@@ -20,23 +20,22 @@ void bici::servoTask(void *parameter)
     constexpr auto maxDutyCicle = uint32_t{1 << 13};
     constexpr auto servoPin = 15;
     uint32_t notifiedValue = 0;
-    auto a=0;
+    auto n = 0;
     ledcAttachPin(servoPin, ledChannel);
     while (1)
     {
         xTaskNotifyWait(0, ULONG_MAX, &notifiedValue, portMAX_DELAY);
-        //portDISABLE_INTERRUPTS();
         if (notifiedValue == 3)
         {
-            if (a==0)
+            if (n == 0)
             {
                 ledcSetup(ledChannel, freq, resolution);
                 ledcWrite(ledChannel, maxDutyCicle * 0.15); // 819
                 servoState = ServoState::Close;
-                a=1;
+                n = 1;
             }
         }
-        
+
         if (notifiedValue == 2)
         {
             //Serial.println("Entra");
@@ -50,12 +49,11 @@ void bici::servoTask(void *parameter)
             case ServoState::Close:
                 ledcWrite(ledChannel, maxDutyCicle * 0.03); // 409
                 servoState = ServoState::Open;
-                a=0;
+                n = 0;
                 break;
             }
             std::this_thread::sleep_for(1s);
             Serial.println("Sale");
         }
-        //portENABLE_INTERRUPTS();
     }
 }

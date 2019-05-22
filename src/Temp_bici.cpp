@@ -7,13 +7,16 @@
 #include <soc/rtc.h>
 #include <Servo_bici.h>
 #include <Arduino.h>
+#include <chrono>
 #include <thread>
 #include <tuple>
 void bici::Temp(void *parameter)
 {
+    using namespace std::chrono;
+    using namespace std::literals::chrono_literals;
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_11);
-    auto& Temperature = *static_cast<std::tuple<int>*>(parameter);
+    auto &Temperature = *static_cast<std::tuple<int> *>(parameter);
     while (1)
     {
         uint32_t val = adc1_get_raw(ADC1_CHANNEL_6);
@@ -23,20 +26,14 @@ void bici::Temp(void *parameter)
             val = adc1_get_raw(ADC1_CHANNEL_6);
             vout += val;
         }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         vout /= 1024;
         if (vout <= 496.36)
         {
             vout = 496.36;
         }
         int temp = (vout - 496.36) / 24.19;
-        
         std::get<0>(Temperature) = temp;
-        
-        if (temp >= 100)
-        {
-            auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
-            xTaskNotify(*servoTask, 3, eSetBits);
-        }
-        vTaskDelay(500/portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }

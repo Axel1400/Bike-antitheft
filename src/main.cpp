@@ -22,6 +22,7 @@ auto Temperature = std::tuple<int>{};
 void setup()
 {
     pinMode(2, OUTPUT);
+    pinMode(27, OUTPUT);
     Serial.begin(115200);
     /*
     const char apn[] = "internet.itelcel.com";
@@ -38,17 +39,16 @@ void setup()
     Serial.println(modemInfo);
 
     Blynk.begin(auth, modem, apn, user, pass);
+    */
+    TaskHandle_t servoTask;
+    xTaskCreate(
+        bici::servoTask,
+        "Servo",
+        10000,
+        nullptr,
+        1,
+        &servoTask);
 
-    timer.setInterval(2000, [] {
-        Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
-        Blynk.syncVirtual(V2);
-        if (V2 == 1)
-        {
-            Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
-        }
-    });*/
-    
-   
     TaskHandle_t OLEDtask;
     xTaskCreate(
         bici::OLED,
@@ -57,7 +57,7 @@ void setup()
         nullptr,
         1,
         &OLEDtask);
-    
+
     TaskHandle_t gpstask;
     xTaskCreate(
         bici::GPS_task,
@@ -67,23 +67,12 @@ void setup()
         1,
         &gpstask);
 
-
-    TaskHandle_t servoTask;
-
-    xTaskCreate(
-        bici::servoTask,
-        "Servo",
-        10000,
-        nullptr,
-        1,
-        &servoTask);
-
     TaskHandle_t temptask;
     xTaskCreate(
         bici::Temp,
         "Temp",
         10000,
-        &servoTask,
+        &Temperature,
         1,
         &temptask);
 
@@ -94,7 +83,20 @@ void setup()
         10000,
         &servoTask,
         1,
-        nullptr);
+        &NFCtask);
+    /*timer.setInterval(2000, [] {
+        Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
+        Blynk.syncVirtual(V2);
+        if (V2 == 1)
+        {
+            Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
+        }
+        if ((std::get<0>(Temperature)) >= 100)
+        {
+            auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
+            xTaskNotify(*servoTask, 3, eSetBits);
+        }
+    });*/
     auto configurePin = [](uint32_t pin) {
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_NEGEDGE;
@@ -138,6 +140,7 @@ void setup()
     gpio_intr_enable(static_cast<gpio_num_t>(25)); // Enable the pin for interrupts
 
     gpio_isr_handler_add(GPIO_NUM_25, [](void *pin) IRAM_ATTR {
+        Serial.println("Cortaron la cadena");
         auto higherPriorityTask = pdFALSE;
         auto servoTask = reinterpret_cast<TaskHandle_t *>(pin);
         Blynk.notify("Cortaron la cadena, sistema activado");
@@ -149,7 +152,7 @@ void setup()
     {
         //Blynk.run();
         //timer.run();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
 
