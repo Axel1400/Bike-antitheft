@@ -60,7 +60,7 @@ void bici::NFC(void *parameter)
             }
             code.toUpperCase();
             Serial.println(code);
-            if (code == "47EB9AAAB5C81" || "1234")//
+            if (code == "47EB9AAAB5C81" || code == "1234" || code == "92FE366")//
             {
                 auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
                 xTaskNotify(*servoTask, 2, eSetBits);

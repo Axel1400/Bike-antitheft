@@ -24,7 +24,7 @@ void setup()
     pinMode(2, OUTPUT);
     pinMode(27, OUTPUT);
     Serial.begin(115200);
-    /*
+
     const char apn[] = "internet.itelcel.com";
     const char user[] = "webgprs";
     const char pass[] = "webgprs2002";
@@ -39,7 +39,7 @@ void setup()
     Serial.println(modemInfo);
 
     Blynk.begin(auth, modem, apn, user, pass);
-    */
+
     TaskHandle_t servoTask;
     xTaskCreate(
         bici::servoTask,
@@ -84,7 +84,7 @@ void setup()
         &servoTask,
         1,
         &NFCtask);
-    /*timer.setInterval(2000, [] {
+    timer.setInterval(2000, [] {
         Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
         Blynk.syncVirtual(V2);
         if (V2 == 1)
@@ -93,10 +93,9 @@ void setup()
         }
         if ((std::get<0>(Temperature)) >= 100)
         {
-            auto servoTask = reinterpret_cast<TaskHandle_t *>(parameter);
-            xTaskNotify(*servoTask, 3, eSetBits);
+            Blynk.notify("Tratan de quemar el sistema");
         }
-    });*/
+    });
     auto configurePin = [](uint32_t pin) {
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_NEGEDGE;
@@ -150,8 +149,8 @@ void setup()
 
     while (1)
     {
-        //Blynk.run();
-        //timer.run();
+        Blynk.run();
+        timer.run();
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }

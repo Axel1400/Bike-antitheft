@@ -82,7 +82,7 @@ void displayinit()
 }
 static void Pantalla(void *)
 {
-    if (n >= 50)
+    if (n >= 30)
     {
         digitalWrite(2, (!digitalRead(2)));
         if (a == 0)
@@ -144,6 +144,7 @@ void bici::OLED(void *parameter)
         {
             volts = 0;
         }
+        volts= volts*100/0.8;
         //
         if (a == 0)
         {
