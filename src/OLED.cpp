@@ -127,8 +127,8 @@ void bici::OLED(void *parameter)
     {
         //
         //
-        uint32_t bat = 0;
-        uint32_t bat1 = 0;
+        int32_t bat = 0;
+        int32_t bat1 = 0;
         for (auto i = 0; i < 1024; i++)
         {
             bat = adc1_get_raw(ADC1_CHANNEL_7);
@@ -137,14 +137,14 @@ void bici::OLED(void *parameter)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         //4.2 100%, 3.2v 0%;;;;;;;;,3.3-100%, 2= 0%;
         bat1 /= 1024;
-        double volts = (bat1 * 3.3) / 4095;
-
-        volts = volts - 2.56;
-        if (volts < 0)
+        bat1 = (bat1*3300)/4095;
+        bat1 -= 2560;
+        if (bat1 <= 0)
         {
-            volts = 0;
+            bat1=0;
         }
-        volts= volts*100/0.8;
+        bat1 = (bat1*100)/800;
+        double volts = bat1;
         //
         if (a == 0)
         {

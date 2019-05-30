@@ -14,7 +14,7 @@ void bici::servoTask(void *parameter)
     using namespace std::literals::chrono_literals;
 
     static auto servoState = ServoState::Open;
-    constexpr int freq = 5000;
+    constexpr int freq = 50;
     constexpr int ledChannel = 0;
     constexpr int resolution = 13;
     constexpr auto maxDutyCicle = uint32_t{1 << 13};
@@ -23,12 +23,13 @@ void bici::servoTask(void *parameter)
     auto n = 0;
     ledcAttachPin(servoPin, ledChannel);
     while (1)
-    {
+    {   
         xTaskNotifyWait(0, ULONG_MAX, &notifiedValue, portMAX_DELAY);
         if (notifiedValue == 3)
         {
             if (n == 0)
             {
+                vTaskDelay(10/portTICK_PERIOD_MS);
                 ledcSetup(ledChannel, freq, resolution);
                 ledcWrite(ledChannel, maxDutyCicle * 0.15); // 819
                 servoState = ServoState::Close;
