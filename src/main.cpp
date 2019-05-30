@@ -134,8 +134,8 @@ void setup()
         xTaskNotifyFromISR(*NFCtask, 0x03, eSetBits, &higherPriorityTask);
     },
                          (void *)&NFCtask);
-    //Cadena
 
+    //Cadena
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_INTR_NEGEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
