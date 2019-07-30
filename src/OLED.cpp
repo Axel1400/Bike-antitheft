@@ -82,7 +82,7 @@ void displayinit()
 }
 static void Pantalla(void *)
 {
-    if (n >= 30)
+    if (n >= 25)
     {
         digitalWrite(2, (!digitalRead(2)));
         if (a == 0)
@@ -106,12 +106,11 @@ void bici::OLED(void *parameter)
     touch_pad_init();
     touch_pad_set_fsm_mode(static_cast<touch_fsm_mode_t>(TOUCH_FSM_MODE_TIMER));
     touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V);
-    touch_pad_config(TOUCH_PAD_NUM9, 150);
+    touch_pad_config(TOUCH_PAD_NUM9, 230);
     touch_pad_filter_start(10);
-    touch_pad_set_thresh(TOUCH_PAD_NUM9, 150);
+    touch_pad_set_thresh(TOUCH_PAD_NUM9, 230);
     touch_pad_isr_register(Pantalla, NULL);
     touch_pad_intr_enable();
-    // I2C
 
     //ADC
     adc1_config_width(ADC_WIDTH_BIT_12);
@@ -137,13 +136,13 @@ void bici::OLED(void *parameter)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         //4.2 100%, 3.2v 0%;;;;;;;;,3.3-100%, 2= 0%;
         bat1 /= 1024;
-        bat1 = (bat1*3300)/4095;
+        bat1 = (bat1 * 3300) / 4095;
         bat1 -= 2560;
         if (bat1 <= 0)
         {
-            bat1=0;
+            bat1 = 0;
         }
-        bat1 = (bat1*100)/800;
+        bat1 = (bat1 * 100) / 800;
         double volts = bat1;
         //
         if (a == 0)
@@ -181,13 +180,13 @@ void bici::OLED(void *parameter)
                 i2c_master_stop(cmd);
                 i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
                 i2c_cmd_link_delete(cmd);
-                vTaskDelay(10 / portTICK_PERIOD_MS);
+                //vTaskDelay(10 / portTICK_PERIOD_MS);
             }
         }
         if (a == 1)
         {
             cleardisplay();
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+            //vTaskDelay(10 / portTICK_PERIOD_MS);
         }
         x = 0;
         vTaskDelay(1000 / portTICK_PERIOD_MS);

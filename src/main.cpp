@@ -24,29 +24,32 @@ auto Temperature = std::tuple<int>{};
 char Bnot;
 void setup()
 {
+    char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
+    /*const char apn[] = "internet.itelcel.com";
+    const char user[] = "webgprs";
+    const char pass[] = "webgprs2002";*/
     pinMode(2, OUTPUT);
     pinMode(27, OUTPUT);
     Serial.begin(115200);
-    char ssid[] = "Bodoque";
-    char pass[] = "CULEBRA081400";
-    const char auth[] = "250f0a71806e48a3b6acad3e35aa8f58";
-    Blynk.begin(auth, ssid, pass);
-    /*
-    const char apn[] = "internet.itelcel.com";
-    const char user[] = "webgprs";
-    const char pass[] = "webgprs2002";
-    HardwareSerial Serial1(1);
+    char ssid[] = "Bici";
+    char pass[] = "12345678";
+    char server[] = "blynk-cloud.com";
+    unsigned int port = 8442;
+    Blynk.connectWiFi(ssid, pass);
+    Blynk.config(auth, server, port);
+    Blynk.connect();
+    //Blynk.begin(auth, ssid, pass);
+    
+    /*HardwareSerial Serial1(1);
     TinyGsm modem(Serial1);
     Serial1.begin(115200, SERIAL_8N1, 4, 12, false);
-    vTaskDelay(3000/portTICK_PERIOD_MS);
-    //delay(3000);
+    delay(3000);
     modem.restart();
     String modemInfo = modem.getModemInfo();
     Serial.print("Modem: ");
-    Serial.println(modemInfo);
+    Serial.println(modemInfo);*/
 
-    Blynk.begin(auth, modem, apn, user, pass);
-    */
+    //Blynk.begin(auth, modem, apn, user, pass);
     TaskHandle_t servoTask;
     xTaskCreate(
         bici::servoTask,
@@ -95,10 +98,10 @@ void setup()
     timer.setInterval(5000, [] {
         Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
         Blynk.syncVirtual(V2);
-        if (V2 == 1)
+        /*if (V2 == 1)
         {
             Blynk.virtualWrite(V0, 1, std::get<0>(position), std::get<1>(position), "Bici");
-        }
+        }*/
         if ((std::get<0>(Temperature)) >= 100)
         {
             Blynk.notify("Tratan de quemar el sistema");
